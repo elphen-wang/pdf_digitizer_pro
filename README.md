@@ -89,7 +89,7 @@ ps: The figure of this example is taken from https://arxiv.org/abs/2411.11749 .
 
 ```
 @misc{pdf_digitizer_pro2026,
-  author       = {Elphen Wang},
+  author       = {J. Wang},
   title        = {{PDF Vector Curve Extractor}},
   howpublished = {\url{https://github.com/elphen-wang/pdf_digitizer_pro}},
   year         = {2026},
