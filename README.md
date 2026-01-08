@@ -92,8 +92,8 @@ ps: The figure of this example is taken from https://arxiv.org/abs/2411.11749 .
   author       = {J. Wang},
   title        = {{PDF Vector Curve Extractor}},
   howpublished = {\url{https://github.com/elphen-wang/pdf_digitizer_pro}},
-  year         = {2026},
-  note         = {Accessed: 2026-01-08}
+  #year         = {2026},
+  #note         = {Accessed: 2026-01-08}
 }
 ```
 
