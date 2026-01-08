@@ -200,7 +200,7 @@ This program is a Python-based PDF vector curve extractor that uses PyMuPDF to p
 
 ```
 @misc{pdf_digitizer_pro2026,
-  author       = {J. Wang},
+  author       = {J. Wang, X.Y. Wang},
   title        = {{PDF Vector Curve Extractor}},
   howpublished = {\url{https://github.com/elphen-wang/pdf_digitizer_pro}},
   year         = {2026},
