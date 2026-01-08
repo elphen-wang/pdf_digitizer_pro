@@ -380,14 +380,6 @@ class DataWindow(tk.Toplevel):
         lang_code: str,
         app_ref: Any
     ):
-        """Initialize the data window.
-        
-        Args:
-            parent: Parent window
-            full_data: List of (x, y) data points
-            lang_code: Language code ("CN" or "EN")
-            app_ref: Reference to main application
-        """
         super().__init__(parent)
         self.full_data = full_data if full_data else []
         self.display_data: List[Tuple[float, float]] = []
@@ -411,10 +403,33 @@ class DataWindow(tk.Toplevel):
         self.spin_step.insert(0, "1")
         
         self.update_lang_ui()
-        self.cmb_sep.current(0)
+        self.cmb_sep.current(1)
         
-        # Delay data processing
-        self.after(100, self.process_data)
+        # 初始化时，不强制填充占位符 (force_fill=False)
+        self.after(100, lambda: self.process_data(force_fill=False))
+
+    def _setup_placeholder(self, entry: tk.Entry, placeholder: str):
+        """Helper to add placeholder behavior to an Entry widget."""
+        entry.default_val = placeholder
+        
+        entry.delete(0, tk.END)
+        entry.insert(0, placeholder)
+        entry.config(fg="#999999") 
+
+        def on_focus_in(event):
+            # 只有当颜色为灰色（占位符状态）且内容匹配默认值时才清空
+            if entry.cget('fg') == "#999999" and entry.get().strip() == entry.default_val:
+                entry.delete(0, tk.END)
+                entry.config(fg="black")
+
+        def on_focus_out(event):
+            # 如果为空，恢复占位符
+            if not entry.get().strip():
+                entry.insert(0, entry.default_val)
+                entry.config(fg="#999999")
+
+        entry.bind("<FocusIn>", on_focus_in)
+        entry.bind("<FocusOut>", on_focus_out)
     
     def setup_controls(self) -> None:
         """Setup control panel with filters and export options."""
@@ -429,32 +444,68 @@ class DataWindow(tk.Toplevel):
         f_grid = tk.Frame(lf_filter)
         f_grid.pack(fill=tk.X)
         
+        # 计算 Placeholder - 使用校准参考点的四个点
+        # 从主应用获取校准值
+        if hasattr(self.app, 'calibration') and self.app.calibration:
+            calib_values = self.app.calibration.calib_values
+            x1_val = calib_values.get('x1', 0.0)
+            x2_val = calib_values.get('x2', 0.0)
+            y1_val = calib_values.get('y1', 0.0)
+            y2_val = calib_values.get('y2', 0.0)
+            
+            # X轴：取x1和x2中的最小值和最大值
+            x_min_str = f"{min(x1_val, x2_val):.5g}"
+            x_max_str = f"{max(x1_val, x2_val):.5g}"
+            
+            # Y轴：取y1和y2中的最小值和最大值
+            y_min_str = f"{min(y1_val, y2_val):.5g}"
+            y_max_str = f"{max(y1_val, y2_val):.5g}"
+        else:
+            # 如果没有校准信息，回退到使用数据的最小最大值
+            if self.full_data:
+                xs = [p[0] for p in self.full_data]
+                ys = [p[1] for p in self.full_data]
+                x_min_str = f"{min(xs):.5g}"
+                x_max_str = f"{max(xs):.5g}"
+                y_min_str = f"{min(ys):.5g}"
+                y_max_str = f"{max(ys):.5g}"
+            else:
+                x_min_str = x_max_str = y_min_str = y_max_str = "0"
+
         self.lbl_xmin = tk.Label(f_grid, text="XMin:")
         self.lbl_xmin.grid(row=0, column=0, sticky="e")
-        self.e_xmin = tk.Entry(f_grid, width=7)
+        self.e_xmin = tk.Entry(f_grid, width=10)
+        self._setup_placeholder(self.e_xmin, x_min_str)
         self.e_xmin.grid(row=0, column=1, padx=2)
         
         self.lbl_xmax = tk.Label(f_grid, text="XMax:")
         self.lbl_xmax.grid(row=0, column=2, sticky="e")
-        self.e_xmax = tk.Entry(f_grid, width=7)
+        self.e_xmax = tk.Entry(f_grid, width=10)
+        self._setup_placeholder(self.e_xmax, x_max_str)
         self.e_xmax.grid(row=0, column=3, padx=2)
         
         self.lbl_ymin = tk.Label(f_grid, text="YMin:")
         self.lbl_ymin.grid(row=1, column=0, sticky="e")
-        self.e_ymin = tk.Entry(f_grid, width=7)
+        self.e_ymin = tk.Entry(f_grid, width=10)
+        self._setup_placeholder(self.e_ymin, y_min_str)
         self.e_ymin.grid(row=1, column=1, padx=2)
         
         self.lbl_ymax = tk.Label(f_grid, text="YMax:")
         self.lbl_ymax.grid(row=1, column=2, sticky="e")
-        self.e_ymax = tk.Entry(f_grid, width=7)
+        self.e_ymax = tk.Entry(f_grid, width=10)
+        self._setup_placeholder(self.e_ymax, y_max_str)
         self.e_ymax.grid(row=1, column=3, padx=2)
         
-        self.btn_apply = ttk.Button(f_grid, command=self.process_data)
+        # [修改] 按钮点击视为“强制填充并应用”
+        self.btn_apply = ttk.Button(
+            f_grid, 
+            command=lambda: self.process_data(force_fill=True)
+        )
         self.btn_apply.grid(row=0, column=4, rowspan=2, padx=5, sticky="ns")
         
-        # Bind Enter key
+        # [修改] 回车键视为“强制填充并应用”
         for entry in [self.e_xmin, self.e_xmax, self.e_ymin, self.e_ymax]:
-            entry.bind("<Return>", lambda x: self.process_data())
+            entry.bind("<Return>", lambda x: self.process_data(force_fill=True))
         
         # Export section
         lf_export = ttk.LabelFrame(
@@ -474,9 +525,9 @@ class DataWindow(tk.Toplevel):
             from_=config.MIN_STEP_VALUE,
             to=config.MAX_STEP_VALUE,
             width=5,
-            command=self.process_data
+            command=lambda: self.process_data(force_fill=False) # 调整步长通常不强制锁定范围，除非你希望这样
         )
-        self.spin_step.bind("<Return>", lambda x: self.process_data())
+        self.spin_step.bind("<Return>", lambda x: self.process_data(force_fill=False))
         self.spin_step.pack(side=tk.LEFT, padx=5)
         
         self.lbl_sep = tk.Label(f_line1)
@@ -533,22 +584,11 @@ class DataWindow(tk.Toplevel):
         self.sort_desc = False
     
     def t(self, key: str) -> str:
-        """Get translated text for a key.
-        
-        Args:
-            key: Translation key
-            
-        Returns:
-            Translated text or key if not found
-        """
+        """Get translated text for a key."""
         return config.LANG_MAP.get(key, {}).get(self.lang, key)
     
     def update_lang_ui(self, new_lang: Optional[str] = None) -> None:
-        """Update UI text based on language.
-        
-        Args:
-            new_lang: New language code, or None to use current
-        """
+        """Update UI text based on language."""
         if new_lang:
             self.lang = new_lang
         
@@ -574,7 +614,8 @@ class DataWindow(tk.Toplevel):
         ]
         idx = self.cmb_sep.current()
         self.cmb_sep['values'] = vals
-        self.cmb_sep.current(idx if idx >= 0 else 0)
+        if idx >= 0:
+            self.cmb_sep.current(idx)
         self.update_count_label()
     
     def update_headers(self) -> None:
@@ -588,11 +629,36 @@ class DataWindow(tk.Toplevel):
         self.tree.heading("x", text=tx)
         self.tree.heading("y", text=ty)
     
-    def process_data(self) -> None:
-        """Process and filter data based on current settings."""
+    def process_data(self, force_fill: bool = False) -> None:
+        """Process and filter data based on current settings.
+        
+        Args:
+            force_fill: If True, convert placeholders to active values and filter.
+                        If False, placeholders are treated as 'No Filter'.
+        """
+        target_entries = [self.e_xmin, self.e_xmax, self.e_ymin, self.e_ymax]
+        
+        # 1. 预处理：如果是 force_fill (用户点击刷新)，把灰色 Placeholder 变成黑色实值
+        if force_fill:
+            for entry in target_entries:
+                default_val = getattr(entry, "default_val", "")
+                is_placeholder = (entry.cget('fg') == "#999999")
+                
+                if is_placeholder:
+                    # 将灰色占位符转为黑色实值 -> 这意味着启用了该数值的筛选
+                    entry.delete(0, tk.END)
+                    entry.insert(0, default_val)
+                    entry.config(fg="black")
+
         def get_val(entry: tk.Entry) -> Optional[float]:
-            """Get float value from entry or None."""
+            """Get float value if active, None if placeholder/empty."""
             try:
+                # 检查是否为占位符状态（灰色）
+                is_placeholder = (entry.cget('fg') == "#999999")
+                if is_placeholder:
+                    # 按照要求：如果没点刷新（没转成黑色），则不启用范围筛选 -> 返回 None
+                    return None
+                
                 v = entry.get().strip()
                 return float(v) if v else None
             except ValueError:
@@ -611,6 +677,7 @@ class DataWindow(tk.Toplevel):
         # Filter data
         temp = []
         for x, y in self.full_data:
+            # 如果 get_val 返回 None (placeholder 状态)，条件不成立，不进行 continue -> 数据保留
             if xmin is not None and x < xmin:
                 continue
             if xmax is not None and x > xmax:
@@ -650,11 +717,7 @@ class DataWindow(tk.Toplevel):
         self.lbl_count.config(text=msg)
     
     def sort_data(self, col: int) -> None:
-        """Sort data by column.
-        
-        Args:
-            col: Column index (1 for X, 2 for Y)
-        """
+        """Sort data by column."""
         if self.sort_col == col:
             self.sort_desc = not self.sort_desc
         else:
@@ -669,11 +732,7 @@ class DataWindow(tk.Toplevel):
         self.refresh_table()
     
     def get_sep_char(self) -> str:
-        """Get separator character based on selection.
-        
-        Returns:
-            Separator character
-        """
+        """Get separator character based on selection."""
         idx = self.cmb_sep.current()
         if idx == 1:
             return ","
@@ -701,7 +760,6 @@ class DataWindow(tk.Toplevel):
         if not filename:
             return
         
-        # Force comma for CSV
         if filename.lower().endswith(".csv") and sep != ",":
             sep = ","
         
