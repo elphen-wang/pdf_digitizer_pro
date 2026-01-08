@@ -32,7 +32,7 @@ A GUI tool to extract vector curve data from PDF files. Users can open PDFs, cal
 7. **多语言支持**  
    界面支持中文和英文两种语言切换，方便不同语言用户使用。
 
-**Ps: 按键或者控件之间切换有阻滞感，可以通过点击标题栏缓解。**
+**Ps: 1. 程序在MacOS平台测试和开发。2. 按键或者控件之间切换有阻滞感，可以通过点击标题栏缓解。**
 
 ### 适用场景
 
@@ -72,7 +72,8 @@ This program is a Python-based PDF vector curve extractor that uses PyMuPDF to p
 7. **Multilingual Support**  
    Interface supports both English and Chinese language toggling for user convenience.
 
-** P.S.: There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar. **
+** P.S.: 1. The program was tested and developed on the macOS platform.
+2. There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar. **
 
 ### Use Cases
 
