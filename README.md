@@ -72,8 +72,7 @@ This program is a Python-based PDF vector curve extractor that uses PyMuPDF to p
 7. **Multilingual Support**  
    Interface supports both English and Chinese language toggling for user convenience.
 
-** P.S.: 1. The program was tested and developed on the macOS platform.
-2. There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar. **
+** P.S.: 1. The program was tested and developed on the macOS platform. 2. There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar. **
 
 ### Use Cases
 
