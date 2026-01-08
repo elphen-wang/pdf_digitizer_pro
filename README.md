@@ -1,12 +1,37 @@
 # PDF Vector Curve Extractor
-A GUI tool to extract vector curve data from PDF files. Users can open PDFs, calibrate axes (linear/log scale), and pick curves to capture coordinate points. Features include data filtering, preview, copy, and export to TXT/CSV. Supports English/Chinese UI and offers a magnifier for precise selection. It can be considered a supplement and alternative to webplotdigitizer （https://automeris.io）.
 
+A GUI tool to extract vector curve data from PDF files. Users can open PDFs, calibrate axes (linear/log scale), and pick curves to capture coordinate points. Features include data filtering, preview, copy, and export to TXT/CSV. Supports English/Chinese UI and offers a magnifier for precise selection. It can be considered a supplement and alternative to webplotdigitizer (https://automeris.io).
 
 ## 中文说明
 
 ### 程序简介
 
-本程序是一个基于Python的PDF矢量曲线提取工具，使用PyMuPDF解析PDF中的矢量绘图数据，结合Tkinter构建图形用户界面，方便用户从PDF图表中提取曲线的数值数据。可以当做是webplotdigitizer （https://automeris.io） 的补充和平替。
+本程序是一个基于Python的PDF矢量曲线提取工具，使用PyMuPDF解析PDF中的矢量绘图数据，结合Tkinter构建图形用户界面，方便用户从PDF图表中提取曲线的数值数据。可以当做是webplotdigitizer (https://automeris.io) 的补充和平替。
+
+### 安装说明
+
+#### 系统要求
+
+- Python 3.7 或更高版本
+- 支持 Windows、macOS 和 Linux
+
+#### 安装步骤
+
+1. **克隆或下载项目**
+   ```bash
+   git clone https://github.com/elphen-wang/pdf_digitizer_pro.git
+   cd pdf_digitizer_pro
+   ```
+
+2. **安装依赖**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **运行程序**
+   ```bash
+   python main.py
+   ```
 
 ### 主要功能
 
@@ -32,7 +57,32 @@ A GUI tool to extract vector curve data from PDF files. Users can open PDFs, cal
 7. **多语言支持**  
    界面支持中文和英文两种语言切换，方便不同语言用户使用。
 
-**Ps: 1. 程序在MacOS平台测试和开发。2. 按键或者控件之间切换有阻滞感，可以通过点击标题栏缓解。**
+**注意：1. 程序在MacOS平台测试和开发，同时支持Windows和Linux。2. 按键或者控件之间切换有阻滞感，可以通过点击标题栏缓解。**
+
+### 使用说明
+
+#### 基本操作流程
+
+1. **打开PDF文件**
+   - 点击"打开"按钮，选择要处理的PDF文件
+   - 程序会自动加载第一页并显示
+
+2. **标定坐标轴**
+   - 点击"设定坐标"按钮进入标定模式
+   - 依次点击X轴的两个点（X1, X2）和Y轴的两个点（Y1, Y2）
+   - 为每个点输入对应的实际坐标值
+   - 如需对数坐标，勾选"Log-X"或"Log-Y"
+
+3. **提取曲线数据**
+   - 标定完成后，点击"拾取曲线"按钮
+   - 在PDF图表上点击目标曲线
+   - 程序会自动识别并提取曲线数据
+
+4. **查看和导出数据**
+   - 提取的数据会在新窗口中显示
+   - 可以设置X/Y范围进行筛选
+   - 可以设置采样间隔进行数据稀疏
+   - 支持复制到剪贴板或导出为TXT/CSV文件
 
 ### 适用场景
 
@@ -47,6 +97,31 @@ A GUI tool to extract vector curve data from PDF files. Users can open PDFs, cal
 ### Program Overview
 
 This program is a Python-based PDF vector curve extractor that uses PyMuPDF to parse vector drawing data from PDF files and Tkinter for the graphical user interface. It enables users to extract numerical data points from curves embedded in PDF charts effortlessly.
+
+### Installation
+
+#### Requirements
+
+- Python 3.7 or higher
+- Supports Windows, macOS, and Linux
+
+#### Installation Steps
+
+1. **Clone or download the project**
+   ```bash
+   git clone https://github.com/elphen-wang/pdf_digitizer_pro.git
+   cd pdf_digitizer_pro
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the program**
+   ```bash
+   python main.py
+   ```
 
 ### Key Features
 
@@ -72,7 +147,32 @@ This program is a Python-based PDF vector curve extractor that uses PyMuPDF to p
 7. **Multilingual Support**  
    Interface supports both English and Chinese language toggling for user convenience.
 
-**P.S.: 1. The program was tested and developed on the macOS platform. 2. There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar.**
+**Note: 1. The program was tested and developed on macOS, and also supports Windows and Linux. 2. There is a feeling of sluggishness when switching between buttons or controls; this can be alleviated by clicking the title bar.**
+
+### Usage Guide
+
+#### Basic Workflow
+
+1. **Open PDF File**
+   - Click the "Open" button and select a PDF file
+   - The program will automatically load and display the first page
+
+2. **Calibrate Axes**
+   - Click "Set Axis" to enter calibration mode
+   - Click two points on the X-axis (X1, X2) and two points on the Y-axis (Y1, Y2)
+   - Enter the actual coordinate values for each point
+   - Check "Log-X" or "Log-Y" for logarithmic scales if needed
+
+3. **Extract Curve Data**
+   - After calibration, click "Pick Line"
+   - Click on the target curve in the PDF chart
+   - The program will automatically identify and extract curve data
+
+4. **View and Export Data**
+   - Extracted data is displayed in a new window
+   - Filter data by setting X/Y ranges
+   - Downsample data by setting stride intervals
+   - Copy to clipboard or export as TXT/CSV files
 
 ### Use Cases
 
@@ -80,14 +180,21 @@ This program is a Python-based PDF vector curve extractor that uses PyMuPDF to p
 - Digitizing curve data from engineering drawings or technical documents  
 - Educational and data analysis scenarios requiring manual or semi-automatic graph digitization
 
-
 ## Example
 
 <img width="1280" height="670" alt="image" src="https://github.com/user-attachments/assets/12447315-2ea3-48b9-8a12-487379545e38" />
 
 <img width="1280" height="671" alt="image" src="https://github.com/user-attachments/assets/31048eea-9689-4389-a908-ad113a789610" />
 
-P.S.:  The figure of this example is taken from https://arxiv.org/abs/2411.11749 .
+**Note**: The figure of this example is taken from https://arxiv.org/abs/2411.11749 .
+
+## 更多文档 / More Documentation
+
+- [项目架构](doc/ARCHITECTURE.md) - 项目结构和技术细节
+- [开发指南](doc/DEVELOPMENT.md) - 开发规范和贡献指南
+
+- [Project Architecture](doc/ARCHITECTURE.md) - Project structure and technical details
+- [Development Guide](doc/DEVELOPMENT.md) - Development standards and contributing guide
 
 ## Cite this project
 
@@ -96,10 +203,11 @@ P.S.:  The figure of this example is taken from https://arxiv.org/abs/2411.11749
   author       = {J. Wang},
   title        = {{PDF Vector Curve Extractor}},
   howpublished = {\url{https://github.com/elphen-wang/pdf_digitizer_pro}},
-  #year         = {2026},
-  #note         = {Accessed: 2026-01-08}
+  year         = {2026},
+  note         = {Accessed: 2026-01-08}
 }
 ```
 
+## License
 
-
+Licensed under the Apache License, Version 2.0. See LICENSE file for details.
