@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PDF 矢量提取器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="toolbar">
+    <button class="tool" data-action="open" data-i18n="btn_open">📂 打开</button>
+    <button class="tool" data-action="zoom-in" data-i18n="btn_zi">➕ 放大</button>
+    <button class="tool" data-action="zoom-out" data-i18n="btn_zo">➖ 缩小</button>
+    <button class="tool" data-action="fit" data-i18n="btn_rv">⛶ 适应</button>
+    <button class="tool" data-action="lang" data-i18n="btn_lng">En/中</button>
+
+    <span class="divider"></span>
+
+    <span class="group-label calib" data-i18n="lbl_step1">1.定标:</span>
+    <button class="tool" data-action="calibrate" id="btn-calibrate" data-i18n="btn_axis" disabled>🎯 设定坐标</button>
+    <button class="tool" data-action="reset" id="btn-reset" data-i18n="btn_reset_axis" disabled>↺ 重置</button>
+    <label class="check"><input type="checkbox" id="logx"><span data-i18n="chk_log_x">Log-X</span></label>
+    <label class="check"><input type="checkbox" id="logy"><span data-i18n="chk_log_y">Log-Y</span></label>
+
+    <span class="divider"></span>
+
+    <span class="group-label pick" data-i18n="lbl_step2">2.提取:</span>
+    <button class="tool" data-action="pick" id="btn-pick" data-i18n="btn_select" disabled>📈 拾取曲线</button>
+    <button class="tool" data-action="data" id="btn-data" data-i18n="btn_data">📊 数据表</button>
+
+    <span class="spacer"></span>
+    <button class="tool danger" data-action="exit" data-i18n="btn_exit">❌</button>
+  </header>
+
+  <main id="stage">
+    <canvas id="canvas"></canvas>
+    <div id="calib-entry" class="hidden">
+      <span id="calib-label">X1 =</span>
+      <input id="calib-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false">
+      <button id="calib-ok" title="Enter">✔</button>
+    </div>
+  </main>
+
+  <footer id="statusbar"><span id="status">就绪 - 请打开 PDF</span></footer>
+
+  <div id="data-modal" class="hidden">
+    <div class="modal-card">
+      <header class="modal-head">
+        <h2 data-i18n="data_win_title">数据筛选与导出</h2>
+        <button id="modal-close" class="icon-button" aria-label="Close">✕</button>
+      </header>
+
+      <section class="panel">
+        <h3 data-i18n="grp_filter">范围筛选</h3>
+        <div class="filters">
+          <label><span data-i18n="lbl_xmin">XMin:</span><input id="f-xmin" type="text" inputmode="decimal"></label>
+          <label><span data-i18n="lbl_xmax">XMax:</span><input id="f-xmax" type="text" inputmode="decimal"></label>
+          <label><span data-i18n="lbl_ymin">YMin:</span><input id="f-ymin" type="text" inputmode="decimal"></label>
+          <label><span data-i18n="lbl_ymax">YMax:</span><input id="f-ymax" type="text" inputmode="decimal"></label>
+          <button id="btn-refresh" class="tool primary" data-i18n="btn_apply">刷新数据</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3 data-i18n="grp_export">导出选项</h3>
+        <div class="export-row">
+          <label><span data-i18n="lbl_step">采样间隔:</span>
+            <input id="stride" type="number" min="1" step="1" value="1">
+          </label>
+          <label><span data-i18n="lbl_sep">分隔符:</span>
+            <select id="separator">
+              <option value="&#9;" data-i18n="sep_tab">Tab</option>
+              <option value="," data-i18n="sep_comma">Comma</option>
+              <option value=" " data-i18n="sep_space">Space</option>
+            </select>
+          </label>
+          <button id="btn-copy" class="tool" data-i18n="btn_copy">复制</button>
+          <button id="btn-save" class="tool primary" data-i18n="btn_save">保存</button>
+        </div>
+        <div id="count" class="count"></div>
+      </section>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="idx" data-i18n="col_idx">序号</th>
+              <th class="sortable" id="th-x" data-i18n="col_x">X</th>
+              <th class="sortable" id="th-y" data-i18n="col_y">Y</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

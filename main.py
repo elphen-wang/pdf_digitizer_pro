@@ -1,32 +1,25 @@
-"""Main entry point for PDF Digitizer Pro.
+"""PDF Digitizer 桌面应用入口（PySide6）。"""
 
-This module initializes and runs the main application.
-"""
+from __future__ import annotations
 
-import tkinter as tk
+import sys
 
-# Try to use TkinterDnD for drag and drop support
-try:
-    from tkinterdnd2 import TkinterDnD
-    DND_AVAILABLE = True
-except ImportError:
-    DND_AVAILABLE = False
-    TkinterDnD = tk.Tk
+from PySide6.QtWidgets import QApplication
 
-from ui.main_window import PDFCurveExtractor
+from pdf_digitizer.qt.main_window import MainWindow
 
 
 def main() -> None:
-    """Main function to start the application."""
-    if DND_AVAILABLE:
-        root = TkinterDnD.Tk()
-    else:
-        root = tk.Tk()
-    
-    app = PDFCurveExtractor(root)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    app.setApplicationName("PDF Digitizer")
+    app.setApplicationDisplayName("PDF Digitizer")
+
+    window = MainWindow()
+    window.show()
+    window.raise_()
+    window.activateWindow()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":
     main()
-

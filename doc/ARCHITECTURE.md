@@ -1,174 +1,61 @@
-# 项目架构 / Project Architecture
+# 项目架构 / Architecture
 
-## 项目结构 / Project Structure
+## 概览 / Overview
 
-```
-pdf_digitizer_pro/
-├── main.py                 # 程序入口 / Program entry point
-├── config.py              # 配置和常量 / Configuration and constants
-├── requirements.txt        # 依赖列表 / Dependencies
-├── .gitignore             # Git忽略文件 / Git ignore file
-├── core/                  # 核心处理模块 / Core processing modules
-│   ├── __init__.py
-│   ├── pdf_processor.py   # PDF处理和图像操作 / PDF processing and image operations
-│   ├── calibration.py     # 坐标标定逻辑 / Coordinate calibration logic
-│   └── data_extractor.py # 曲线提取和数据转换 / Curve extraction and data transformation
-├── ui/                    # UI模块 / UI modules
-│   ├── __init__.py
-│   ├── components.py      # UI组件（输入框、放大镜、数据窗口） / UI components
-│   └── main_window.py     # 主窗口和应用类 / Main window and application class
-└── utils/                 # 工具模块 / Utility modules
-    ├── __init__.py
-    └── helpers.py         # 工具函数 / Helper functions
+本项目把「PDF 矢量提取引擎」与「桌面界面」完全分离。两套界面共用同一套核心模块，因此行为、数据和测试完全一致。
+
+```text
+┌────────────────────┐        ┌──────────────────────────┐
+│ Qt 界面             │        │ pywebview 界面            │
+│ pdf_digitizer/qt/   │        │ pdf_digitizer/webview/    │
+│ PySide6             │        │ HTML/CSS/JS + Python API  │
+└─────────┬──────────┘        └────────────┬─────────────┘
+          └──────────────┬─────────────────┘
+                         ▼
+            核心引擎 pdf_digitizer/
+     core · calibration · geometry · filters · i18n
 ```
 
-## 模块说明 / Module Description
+## 模块 / Modules
 
-### core/ - 核心处理模块
+| 模块 | 职责 |
+|---|---|
+| `pdf_digitizer/core.py` | 打开 PDF/SVG、2× 渲染首页、读取矢量路径、点击命中、提取路径点 |
+| `pdf_digitizer/calibration.py` | 四点定标的线性/对数映射，把相对坐标转换为数据坐标 |
+| `pdf_digitizer/geometry.py` | 点到线段距离、三次贝塞尔采样、路径点展开 |
+| `pdf_digitizer/filters.py` | 范围筛选、采样间隔、排序、剪贴板文本、TXT/CSV 导出 |
+| `pdf_digitizer/i18n.py` | 中英文文案字典与 `translate()` |
+| `pdf_digitizer/qt/` | PySide6 界面：主窗口、画布、定标输入条、数据窗口 |
+| `pdf_digitizer/webview/` | pywebview 界面：API 类、`index.html`、`style.css`、`app.js` |
+| `pdf_digitizer/ui/` | 旧 Tk 实现，仅作参考，不作为入口 |
 
-- **pdf_processor.py**: 负责PDF文件的加载、页面渲染和图像处理
-- **calibration.py**: 管理坐标轴标定状态和计算
-- **data_extractor.py**: 处理曲线数据的提取和坐标转换
+## 数据流 / Data flow
 
-### ui/ - 用户界面模块
+1. **加载**：`PdfSource(path, render_scale=2.0)` 读取第一页的绘图指令，并以 2× 渲染为 `PIL.Image`。PyMuPDF 原生支持 SVG，因此无需 svglib/reportlab。
+2. **定标**：用户在图上点击 X1、X2、Y1、Y2，界面记录相对坐标 `(rel_x, rel_y)` 并输入真实数值。
+   - X 轴只取两个定标点的 x 分量，Y 轴只取 y 分量。
+   - 对数轴使用 `log10` 插值。
+3. **拾取**：点击位置先换算为 PDF 坐标 `scene / render_scale`，`PdfSource.find_path()` 在半径 5 pt 内寻找最近的矢量路径。
+4. **映射**：路径端点 → PDF 坐标 → 相对坐标 → `map_point()` → 数据坐标。
+5. **输出**：`filters.py` 负责筛选、采样、排序与导出；界面只负责展示和交互。
 
-- **components.py**: 可复用的UI组件（输入框、放大镜、数据窗口）
-- **main_window.py**: 主应用程序窗口，协调所有模块
+## 线程与状态 / Threading
 
-### utils/ - 工具模块
+- Qt 版所有界面逻辑运行在 Qt 主线程。
+- pywebview 的 API 调用运行在独立线程；`WebViewApi` 用一把互斥锁保护 PDF、定标与数据状态。
+- 文件对话框通过 `window.create_file_dialog()` 调用，测试时可注入替代函数。
 
-- **helpers.py**: 通用工具函数（坐标转换、数值映射等）
+## 打包 / Packaging
 
-### config.py
+- `PdfDigitizer.spec`：Qt 版，PyInstaller onedir + macOS BUNDLE。
+- `PdfDigitizerWeb.spec`：pywebview 版，包含 `pdf_digitizer/webview/web` 数据文件与 cocoa/pyobjc 隐藏导入。
+- 构建脚本创建隔离的 `.venv`，避免宿主 conda 环境中的废弃包（如 `pathlib` 反向移植）干扰 PyInstaller。
+- 图标由 `scripts/make_icon.py` 生成 PNG 与 ICNS。
 
-集中管理所有配置常量，包括：
-- 语言映射
-- UI常量
-- PDF处理参数
-- 图像处理设置
+## 扩展 / Extending
 
-## 代码优化说明 / Code Optimization
+新增一种界面（例如 Web 前端、命令行批处理）时，只需：
 
-本项目已进行全面重构和优化：
-
-### 模块化设计 / Modular Design
-
-- 将原单文件（692行）拆分为清晰的模块结构
-- 每个模块职责单一，便于维护和测试
-- 清晰的依赖关系，降低耦合度
-
-### 类型提示 / Type Hints
-
-- 所有函数都添加了完整的类型提示
-- 提升代码可读性和IDE支持
-- 便于静态类型检查
-
-### 文档完善 / Documentation
-
-- 所有类和方法都包含详细的文档字符串（Google风格）
-- 模块级文档说明
-- 参数和返回值说明
-
-### 错误处理 / Error Handling
-
-- 改进的异常处理机制
-- 使用具体异常类型而非通用Exception
-- 用户友好的错误提示信息
-
-### 性能优化 / Performance
-
-- 优化的图像缩放算法（可配置插值方法）
-- 鼠标事件节流机制（减少不必要的更新）
-- 高效的数据筛选算法
-- 视图图像缓存机制
-
-### 配置管理 / Configuration Management
-
-- 所有魔法数字提取为配置常量
-- 集中管理，便于调整和扩展
-- 支持运行时配置
-
-## 技术特性 / Technical Features
-
-### 模块化架构
-
-- **清晰的代码结构**：易于理解和维护
-- **低耦合高内聚**：模块间依赖最小化
-- **易于扩展**：新功能可以轻松添加
-
-### 类型安全
-
-- **完整的类型提示**：提升代码质量
-- **IDE支持**：更好的自动补全和错误检测
-- **文档化**：类型即文档
-
-### 性能优化
-
-- **图像处理优化**：使用高效的插值算法
-- **事件处理优化**：节流机制减少CPU占用
-- **内存管理**：及时释放资源
-
-### 错误处理
-
-- **完善的异常处理**：覆盖所有可能的错误情况
-- **用户友好提示**：清晰的错误信息
-- **优雅降级**：错误不影响程序稳定性
-
-### 配置灵活
-
-- **集中管理**：所有配置在一个文件中
-- **易于调整**：修改配置无需改动代码
-- **可扩展性**：支持添加新配置项
-
-## 依赖项 / Dependencies
-
-### 核心依赖
-
-- **PyMuPDF (fitz) >= 1.23.0**
-  - PDF文件解析和处理
-  - 矢量绘图数据提取
-  - 页面渲染为图像
-
-- **Pillow >= 10.0.0**
-  - 图像处理和转换
-  - 图像缩放和裁剪
-  - 图像格式支持
-
-- **Tkinter**
-  - GUI框架（Python标准库）
-  - 窗口和控件管理
-  - 事件处理
-
-### 可选依赖
-
-- **类型检查工具**（开发时）
-  - mypy: 静态类型检查
-  - pylint: 代码质量检查
-
-## 数据流 / Data Flow
-
-```
-PDF文件
-  ↓
-PDFProcessor (加载和渲染)
-  ↓
-图像显示在Canvas
-  ↓
-用户标定坐标轴
-  ↓
-CalibrationState (存储标定信息)
-  ↓
-用户点击曲线
-  ↓
-DataExtractor (提取和转换数据)
-  ↓
-DataWindow (显示和导出)
-```
-
-## 设计模式 / Design Patterns
-
-- **MVC模式**：分离数据、视图和控制逻辑
-- **单例模式**：配置和状态管理
-- **观察者模式**：事件驱动的UI更新
-- **策略模式**：可配置的图像处理算法
-
+1. 复用 `PdfSource`、`map_point()` 和 `filters.py`；
+2. 实现「打开 → 定标 → 拾取 → 展示/导出」四个交互；
+3. 为界面层补充测试，核心算法无需改动。

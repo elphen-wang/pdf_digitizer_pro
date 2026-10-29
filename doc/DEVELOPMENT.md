@@ -1,224 +1,76 @@
-# 开发说明 / Development Guide
+# 开发指南 / Development Guide
 
-## 代码规范 / Code Standards
+## 环境 / Requirements
 
-### 类型提示 / Type Hints
+- Python 3.10+
+- macOS：Qt 与 pywebview 均可运行；Windows/Linux 可从源码运行 Qt 版
+- 依赖见 `requirements.txt` / `requirements-dev.txt`
 
-所有函数必须包含完整的类型提示：
-
-```python
-def process_data(
-    self,
-    x: float,
-    y: float,
-    scale: Optional[float] = None
-) -> Tuple[float, float]:
-    """Process data with type hints."""
-    pass
-```
-
-### 文档字符串 / Docstrings
-
-使用Google风格的文档字符串：
-
-```python
-def calculate_distance(
-    point1: Tuple[float, float],
-    point2: Tuple[float, float]
-) -> float:
-    """Calculate Euclidean distance between two points.
-    
-    Args:
-        point1: First point as (x, y) tuple
-        point2: Second point as (x, y) tuple
-        
-    Returns:
-        Euclidean distance between the points
-        
-    Raises:
-        ValueError: If points are invalid
-    """
-    pass
-```
-
-### 命名规范 / Naming Conventions
-
-- **类名**：PascalCase（如 `PDFProcessor`）
-- **函数/方法名**：snake_case（如 `process_data`）
-- **常量**：UPPER_SNAKE_CASE（如 `MAX_SCALE`）
-- **私有方法**：以单下划线开头（如 `_internal_method`）
-
-### 模块化设计原则 / Modular Design Principles
-
-- **单一职责**：每个模块/类只负责一个功能
-- **低耦合**：模块间依赖最小化
-- **高内聚**：相关功能集中在同一模块
-- **可测试性**：便于单元测试
-
-## 开发环境设置 / Development Environment Setup
-
-### 1. 克隆项目
+## 初始化 / Setup
 
 ```bash
 git clone https://github.com/elphen-wang/pdf_digitizer_pro.git
 cd pdf_digitizer_pro
+
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt
 ```
 
-### 2. 创建虚拟环境
+## 运行 / Run
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# 或
-venv\Scripts\activate  # Windows
+./run.sh                              # Qt 版
+.venv/bin/python main_webview.py      # pywebview 版
 ```
 
-### 3. 安装依赖
+需要指定解释器时：
 
 ```bash
-pip install -r requirements.txt
-```
-
-### 4. 安装开发工具（可选）
-
-```bash
-pip install mypy pylint black
-```
-
-## 代码检查 / Code Checking
-
-### 类型检查
-
-```bash
-mypy .
-```
-
-### 代码质量检查
-
-```bash
-pylint core/ ui/ utils/
-```
-
-### 代码格式化
-
-```bash
-black .
+PYTHON_BIN=/path/to/python3 ./run.sh
 ```
 
 ## 测试 / Testing
 
-### 运行测试
+```bash
+.venv/bin/python -m pytest -q
+```
+
+测试覆盖：
+
+- `tests/test_calibration.py`：线性/对数映射、退化区间
+- `tests/test_filters.py`：筛选、采样、排序、复制文本、TXT/CSV 导出
+- `tests/test_geometry.py`：点到线段距离、贝塞尔采样
+- `tests/test_core.py`：真实 PDF 的渲染与路径命中
+- `tests/test_qt_ui.py`：离屏 `QTest` 真实点击流程
+- `tests/test_webview_api.py`：pywebview 后端 API
+
+## 静态检查 / Lint
 
 ```bash
-python -m pytest tests/
+.venv/bin/python -m ruff check . --exclude build,dist,.venv
+node --check pdf_digitizer/webview/web/app.js
 ```
 
-### 测试覆盖率
+## 构建 / Build
 
 ```bash
-pytest --cov=core --cov=ui --cov=utils
+./build_macos.sh              # dist/PDF Digitizer.app
+./build_macos_webview.sh      # dist/PDF Digitizer Web.app
 ```
 
-## 贡献指南 / Contributing
+构建脚本会创建隔离的 `.venv` 并安装 `requirements-dev.txt`。可用 `PYTHON=/path/to/python3` 指定基础解释器。
 
-### 提交代码
+## 代码约定 / Conventions
 
-1. Fork 项目
-2. 创建功能分支：`git checkout -b feature/your-feature`
-3. 提交更改：`git commit -am 'Add some feature'`
-4. 推送到分支：`git push origin feature/your-feature`
-5. 提交 Pull Request
+- 核心算法只放在 `pdf_digitizer/` 顶层模块，界面层不得复制算法。
+- 新增界面文案必须同时补充 `i18n.py` 中的 `CN` 与 `EN`。
+- 定标输入使用非模态控件，不要用阻塞式模态对话框。
+- 文件、用户输入与 API 参数都要校验；非法值返回明确的 `error` 字段。
+- 新增功能需补充 pytest 测试，保持全部通过。
 
-### 代码审查标准
+## 常见问题 / Troubleshooting
 
-- 代码符合项目规范
-- 包含必要的测试
-- 更新相关文档
-- 通过所有检查
-
-### 报告问题
-
-使用 GitHub Issues 报告问题，包括：
-- 问题描述
-- 复现步骤
-- 预期行为
-- 实际行为
-- 环境信息
-
-## 版本管理 / Version Management
-
-### 版本号格式
-
-遵循语义化版本（Semantic Versioning）：
-- MAJOR.MINOR.PATCH
-- 例如：1.2.3
-
-### 发布流程
-
-1. 更新版本号
-2. 更新 CHANGELOG.md
-3. 创建 Git tag
-4. 发布到 GitHub Releases
-
-## 性能优化建议 / Performance Optimization Tips
-
-### 图像处理
-
-- 使用适当的插值方法（LANCZOS用于质量，NEAREST用于速度）
-- 缓存处理后的图像
-- 避免不必要的图像缩放
-
-### 事件处理
-
-- 使用节流机制减少事件处理频率
-- 避免在事件处理中进行耗时操作
-- 使用异步处理长时间任务
-
-### 内存管理
-
-- 及时释放不需要的资源
-- 避免内存泄漏
-- 使用生成器处理大数据集
-
-## 调试技巧 / Debugging Tips
-
-### 日志记录
-
-```python
-import logging
-
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-logger.debug("Debug message")
-```
-
-### 断点调试
-
-使用 IDE 的调试功能或 pdb：
-
-```python
-import pdb
-pdb.set_trace()
-```
-
-## 常见问题 / FAQ
-
-### Q: 如何添加新的语言支持？
-
-A: 在 `config.py` 的 `LANG_MAP` 中添加新的语言代码和对应的翻译。
-
-### Q: 如何修改图像处理参数？
-
-A: 在 `config.py` 中修改相关常量，如 `IMAGE_INTERPOLATION`。
-
-### Q: 如何扩展数据导出格式？
-
-A: 在 `ui/components.py` 的 `DataWindow` 类中添加新的导出方法。
-
-## 参考资源 / References
-
-- [Python Type Hints](https://docs.python.org/3/library/typing.html)
-- [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-- [PyMuPDF Documentation](https://pymupdf.readthedocs.io/)
-- [Pillow Documentation](https://pillow.readthedocs.io/)
-
+- **PyInstaller 报 `pathlib` 反向移植包错误**：说明构建环境继承了宿主 conda 的 site-packages。删除 `.venv` 后由构建脚本重新创建（脚本默认隔离）。
+- **应用被 Gatekeeper 拦截**：右键「打开」，或 `xattr -dr com.apple.quarantine <app>`。
+- **无法读取 `~/Downloads`**：这是 macOS TCC 权限限制，与应用本身无关；首次选择文件时授权即可。
+- **pywebview 窗口空白**：确认 `pdf_digitizer/webview/web` 已作为数据文件打包（见 `PdfDigitizerWeb.spec`）。
